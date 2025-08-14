@@ -6,6 +6,7 @@ class Furniture
     public ?int    $furnitureID   = null;
     public string  $name          = '';
     public string  $category      = '';
+    public string $tags           = '';
     public string  $description   = '';
     public float   $price         = 0.0;
     public int     $stock_quantity= 0;
@@ -29,30 +30,88 @@ class Furniture
     public static function count(string $searchTerm = ''): int
     {
         global $conn;
-        $searchTerm = '%' . $searchTerm . '%';
 
-        $sql  = "SELECT COUNT(*) AS total
-                 FROM furnitures
-                 WHERE name LIKE ? OR category LIKE ?";
+        $baseSql = "SELECT COUNT(*) AS total FROM furnitures";
+        $params  = [];
+        $types   = '';
+
+        if (trim($searchTerm) !== '') {
+            $decoded = urldecode($searchTerm);
+            $decoded = str_replace('+', ' ', $decoded);
+            $decoded = mb_strtolower(trim($decoded));
+
+            $terms = preg_split('/[^\p{L}\p{N}]+/u', $decoded, -1, PREG_SPLIT_NO_EMPTY);
+
+            $clauses = [];
+            foreach ($terms as $t) {
+                $like = '%' . $t . '%';
+                $clauses[] = "(LOWER(name) LIKE ? OR LOWER(category) LIKE ? OR LOWER(REPLACE(COALESCE(tags,''), ',', ' ')) LIKE ?)";
+                $params[]  = $like;
+                $params[]  = $like;
+                $params[]  = $like;
+                $types    .= 'sss';
+            }
+
+            $where = implode(' AND ', $clauses);
+            $sql   = "$baseSql WHERE $where";
+        } else {
+            $sql = $baseSql;
+        }
+
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ss', $searchTerm, $searchTerm);
+        if (!$stmt) {
+            return 0;
+        }
+        if (!empty($params)) {
+            mysqli_stmt_bind_param($stmt, $types, ...$params);
+        }
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
-
-        return (int) mysqli_fetch_assoc($result)['total'];
+        $row = mysqli_fetch_assoc($result);
+        return (int) ($row['total'] ?? 0);
     }
 
     public static function findPaginated(int $offset, int $limit, string $searchTerm = ''): array
     {
         global $conn;
-        $furnitures = [];
-        $searchTerm = '%' . $searchTerm . '%';
 
-        $sql  = "SELECT * FROM furnitures
-                 WHERE name LIKE ? OR category LIKE ?
-                 LIMIT ?, ?";
+        $furnitures = [];
+        $baseSql    = "SELECT * FROM furnitures";
+        $params     = [];
+        $types      = '';
+
+        if (trim($searchTerm) !== '') {
+            $decoded = urldecode($searchTerm);
+            $decoded = str_replace('+', ' ', $decoded);
+            $decoded = mb_strtolower(trim($decoded));
+
+            $terms = preg_split('/[^\p{L}\p{N}]+/u', $decoded, -1, PREG_SPLIT_NO_EMPTY);
+
+            $clauses = [];
+            foreach ($terms as $t) {
+                $like = '%' . $t . '%';
+                $clauses[] = "(LOWER(name) LIKE ? OR LOWER(category) LIKE ? OR LOWER(REPLACE(COALESCE(tags,''), ',', ' ')) LIKE ?)";
+                $params[]  = $like;
+                $params[]  = $like;
+                $params[]  = $like;
+                $types    .= 'sss';
+            }
+
+            $where = implode(' AND ', $clauses);
+            $sql   = "$baseSql WHERE $where ORDER BY furnitureID DESC LIMIT ?, ?";
+        } else {
+            $sql   = "$baseSql ORDER BY furnitureID DESC LIMIT ?, ?";
+        }
+
+        $params[] = $offset;
+        $params[] = $limit;
+        $types   .= 'ii';
+
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'ssii', $searchTerm, $searchTerm, $offset, $limit);
+        if (!$stmt) {
+            return $furnitures;
+        }
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
 
