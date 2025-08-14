@@ -8,6 +8,19 @@ if (isset($_GET['success']) && $_GET['success'] == '1') {
     $successMsg = 'Product edited successfully!';
 }
 
+// Fetch current product details if `id` is given
+$product = null;
+if (isset($_GET['id']) && !empty($_GET['id'])) {
+    $product = $controller->getProductById($_GET['id']);
+    if (!$product) {
+        $error = "Product not found.";
+    }
+}
+
+// Handle success message
+if (isset($_GET['success']) && $_GET['success'] == '1') {
+    $successMsg = 'Product edited successfully!';
+}
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -26,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // edit product if no errors
     if (empty($error)) {
         try {
-            $success = $controller->editProduct($name, $category, $price, $quantity, $description);
+            $id = intval($_POST['furnitureID'] ?? 0);
+                $success = $controller->editProduct($id, $name, $category, $price, $quantity, $description);
+
             
             if ($success) {
                 header("Location: AdminEditProduct.php?success=1");
@@ -150,34 +165,40 @@ include '../../header.php';
             <input type="hidden" name="furnitureID" value="<?php echo htmlspecialchars($_GET['id'] ?? ''); ?>"> 
             <div class="form-group">
                 <label for="name">Product Name: *</label>
-                <input type="text" id="name" name="name" required>
+                <input type="text" id="name" name="name" 
+                    value="<?php echo htmlspecialchars($product->name ?? ''); ?>" required>
+
             </div>
             
             <div class="form-group">
                 <label for="price">Price: *</label>
-                <input type="number" id="price" name="price" min="0.01" step="0.01" required>
+                <input type="number" id="price" name="price" min="0.01" step="0.01" 
+                    value="<?php echo htmlspecialchars($product->price ?? ''); ?>" required>
             </div>
             
             <div class="form-group">
                 <label for="quantity">Quantity: *</label>
-                <input type="number" id="quantity" name="quantity" min="0" required>
+                <input type="number" id="quantity" name="quantity" min="0" 
+                    value="<?php echo htmlspecialchars($product->stock_quantity ?? ''); ?>" required>
+
             </div>
             
             <div class="form-group">
                 <label for="description">Description:</label>
-                <textarea id="description" name="description"></textarea>
+                <textarea id="description" name="description"><?php 
+                    echo htmlspecialchars($product->description ?? ''); ?></textarea>
             </div>
             
             <div class="form-group">
                 <label for="category">Category: *</label>
                 <select id="category" name="category" required>
                     <option value="">-- Select Category --</option>
-                    <option value="Sofa">Sofa</option>
-                    <option value="Chair">Chair</option>
-                    <option value="Table">Table</option>
-                    <option value="Bed">Bed</option>
-                    <option value="Cabinet">Cabinet</option>
-                    <option value="Other">Other</option>
+                    <option value="Sofa" <?php if(($product->category ?? '') == 'Sofa') echo 'selected'; ?>>Sofa</option>
+                    <option value="Chair" <?php if(($product->category ?? '') == 'Chair') echo 'selected'; ?>>Chair</option>
+                    <option value="Table" <?php if(($product->category ?? '') == 'Table') echo 'selected'; ?>>Table</option>
+                    <option value="Bed" <?php if(($product->category ?? '') == 'Bed') echo 'selected'; ?>>Bed</option>
+                    <option value="Cabinet" <?php if(($product->category ?? '') == 'Cabinet') echo 'selected'; ?>>Cabinet</option>
+                    <option value="Other" <?php if(($product->category ?? '') == 'Other') echo 'selected'; ?>>Other</option>
                 </select>
             </div>
             

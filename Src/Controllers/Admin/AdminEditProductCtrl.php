@@ -20,5 +20,9 @@ class AdminEditProductCtrl {
 
         return $furniture->save();
     }
+    public function getProductById($id) {
+    return Furniture::findById($id);
+}
+
 }
 ?>
