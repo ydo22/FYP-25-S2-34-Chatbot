@@ -36,18 +36,15 @@ class Furniture
         $types   = '';
 
         if (trim($searchTerm) !== '') {
-            // Normalize (handles "gray+chair" & URL-encoded strings)
             $decoded = urldecode($searchTerm);
             $decoded = str_replace('+', ' ', $decoded);
             $decoded = mb_strtolower(trim($decoded));
 
-            // Split on any non letter/number (spaces, commas, slashes, etc.)
             $terms = preg_split('/[^\p{L}\p{N}]+/u', $decoded, -1, PREG_SPLIT_NO_EMPTY);
 
             $clauses = [];
             foreach ($terms as $t) {
                 $like = '%' . $t . '%';
-                // Each term can match name OR category OR tags (commas normalized to spaces)
                 $clauses[] = "(LOWER(name) LIKE ? OR LOWER(category) LIKE ? OR LOWER(REPLACE(COALESCE(tags,''), ',', ' ')) LIKE ?)";
                 $params[]  = $like;
                 $params[]  = $like;
@@ -55,7 +52,7 @@ class Furniture
                 $types    .= 'sss';
             }
 
-            $where = implode(' AND ', $clauses); // AND => require all terms
+            $where = implode(' AND ', $clauses);
             $sql   = "$baseSql WHERE $where";
         } else {
             $sql = $baseSql;
@@ -84,12 +81,10 @@ class Furniture
         $types      = '';
 
         if (trim($searchTerm) !== '') {
-            // Normalize (handles "gray+chair" & URL-encoded strings)
             $decoded = urldecode($searchTerm);
             $decoded = str_replace('+', ' ', $decoded);
             $decoded = mb_strtolower(trim($decoded));
 
-            // Split into tokens
             $terms = preg_split('/[^\p{L}\p{N}]+/u', $decoded, -1, PREG_SPLIT_NO_EMPTY);
 
             $clauses = [];
@@ -102,13 +97,12 @@ class Furniture
                 $types    .= 'sss';
             }
 
-            $where = implode(' AND ', $clauses); // AND => require all terms
+            $where = implode(' AND ', $clauses);
             $sql   = "$baseSql WHERE $where ORDER BY furnitureID DESC LIMIT ?, ?";
         } else {
             $sql   = "$baseSql ORDER BY furnitureID DESC LIMIT ?, ?";
         }
 
-        // Bind paging last
         $params[] = $offset;
         $params[] = $limit;
         $types   .= 'ii';
