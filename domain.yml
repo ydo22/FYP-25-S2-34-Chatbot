@@ -1,258 +1,220 @@
-version: "3.1"
-
+version: '3.1'
 intents:
-  - affirm
-  - ask_delivery
-  - ask_help
-  - cancel_order
-  - deny
-  - escalate
-  - feedback_request
-  - goodbye
-  - greet
-  - show_menu
-  - nlu_fallback
-  - product_inquiry
-  - provide_dimensions
-  - provide_order_id
-  - search_furniture
-  - instruction_manual
-  - inform
-  - select_order
-  - open_support_ticket
+- affirm
+- ask_delivery
+- ask_help
+- cancel_order
+- deny
+- feedback_request
+- furniture_recommendation
+- goodbye
+- greet
+- inform
+- instruction_manual
+- nlu_fallback
+- open_support_ticket
+- product_inquiry
+- provide_dimensions
+- provide_order_id
+- search_furniture
+- select_order
+- show_menu
 entities:
-  - order_id
-  - furniture_name
-  - contact_email
-  - category
-  - dimensions
-  - product_name
-
+- order_id
+- furniture_name
+- contact_email
+- category
+- dimensions
+- product_name
 slots:
   order_id:
     type: text
     influence_conversation: true
     mappings:
-      - type: from_entity
-        entity: order_id
-
+    - type: from_entity
+      entity: order_id
   furniture_name:
     type: text
     influence_conversation: false
     mappings:
-      - type: from_entity
-        entity: furniture_name
-
+    - type: from_entity
+      entity: furniture_name
   dimensions:
     type: text
     influence_conversation: true
     mappings:
-      - type: from_entity
-        entity: dimensions
-
+    - type: from_entity
+      entity: dimensions
   feedback_rating:
     type: text
     influence_conversation: false
     mappings:
-      - type: from_text
-        conditions:
-          - active_loop: feedback_form
-            requested_slot: feedback_rating
+    - type: from_text
+      conditions:
+      - active_loop: feedback_form
+        requested_slot: feedback_rating
   feedback_text:
     type: text
     influence_conversation: false
     mappings:
-      - type: from_text
-        conditions:
-          - active_loop: feedback_form
-            requested_slot: feedback_text
-
+    - type: from_text
+      conditions:
+      - active_loop: feedback_form
+        requested_slot: feedback_text
   ticket_subject:
     type: text
     influence_conversation: false
     mappings:
-      - type: from_text
-        conditions:
-          - active_loop: ticket_form
-            requested_slot: ticket_subject
-  
+    - type: from_text
+      conditions:
+      - active_loop: ticket_form
+        requested_slot: ticket_subject
   ticket_message:
     type: text
     influence_conversation: false
     mappings:
-      - type: from_text
-        conditions:
-          - active_loop: ticket_form
-            requested_slot: ticket_message
-
-  # slot used by the manual form
+    - type: from_text
+      conditions:
+      - active_loop: ticket_form
+        requested_slot: ticket_message
   manual_furniture:
     type: text
     influence_conversation: false
     mappings:
-      - type: from_text
-        conditions:
-          - active_loop: manual_form
-            requested_slot: manual_furniture
-            
+    - type: from_text
+      conditions:
+      - active_loop: manual_form
+        requested_slot: manual_furniture
   cancel_context:
     type: bool
     influence_conversation: true
     mappings:
-      - type: custom
+    - type: custom
   info_context:
     type: bool
     influence_conversation: true
     mappings:
-      - type: custom
-      
+    - type: custom
 forms:
   feedback_form:
     required_slots:
-      - feedback_rating
-      - feedback_text
-
+    - feedback_rating
+    - feedback_text
   manual_form:
     ignored_intents:
-      - nlu_fallback
-      - ask_help
-      - cancel_order
-      - search_furniture
-      - provide_dimensions
+    - nlu_fallback
+    - ask_help
+    - cancel_order
+    - search_furniture
+    - provide_dimensions
     required_slots:
-      - manual_furniture
-  
+    - manual_furniture
   ticket_form:
     required_slots:
-      - ticket_subject
-      - ticket_message
-
+    - ticket_subject
+    - ticket_message
 responses:
   utter_greet:
-    - text: "Hi there! How can I assist you today?"
-
+  - text: Hi there! How can I assist you today?
   utter_main_menu:
-    - text: "Please choose an option:"
-      buttons:
-        - title: "Check Order Status"
-          payload: /ask_delivery
-        - title: "Cancel Order"
-          payload: /cancel_order
-        - title: "Furniture Recommendations"
-          payload: /product_inquiry
-        - title: "Feedback"
-          payload: /feedback_request
-          
-  utter_ask_feedback_rating:
-    - text: "Please rate our service from 1–5 ⭐⭐⭐⭐⭐"
-    
-  utter_ask_feedback_text:
-    - text: "Share your feedback."
-    
-  utter_thank_for_feedback:
-    - text: "Thanks for your feedback! 🙏"
-
-  utter_goodbye:
-    - text: "Goodbye! Let me know if you need anything else."
-
-  utter_ask_order_id:
-    - text: "Please provide your order ID."
-
-  utter_ask_dimensions:
-    - text: "What are the dimensions of your space? (e.g., 200x100x80 cm)"
-
-  utter_order_status:
-    - text: "Your order {order_id} is currently being processed and will be delivered soon."
-
-  utter_order_canceled:
-    - text: "Your order {order_id} has been canceled successfully."
-
-  utter_no_order_found:
-    - text: "Sorry, I couldn't find an order with that ID."
-
-  utter_show_furniture:
-    - text: "Here are some products that match your space: [product_list]."
-
-  utter_escalate:
-    - text: "Connecting you to a human agent now..."
-
-  # Use the slot filled by manual_form
-  utter_instruction_manual:
-    - text: "Here is the instruction manual for {manual_furniture}: [link]"
-
-  utter_thanks_feedback:
-    - text: "Thank you for your feedback!"
-
-  utter_product_listing:
-    - text: "Here are our latest furniture items: [listing_link]"
-  utter_ask_which_order_cancel:
-  - text: "Which order would you like to cancel? (I’ve listed your orders above.) You can click a button or type the order ID."
-  utter_ask_which_order_status:
-  - text: "Which order would you like to check? (I’ve listed your orders above.) You can click a button or type the order ID."
-  utter_confirm_cancel:
-  - text: "Confirm cancel for order #{order_id}?"
+  - text: 'Please choose an option:'
     buttons:
-      - title: "Yes, cancel it"
-        payload: /affirm
-      - title: "No"
-        payload: /deny
+    - title: Check Order Status
+      payload: /ask_delivery
+    - title: Cancel Order
+      payload: /cancel_order
+    - title: Furniture Recommendations
+      payload: /product_inquiry
+    - title: Feedback
+      payload: /feedback_request
+  utter_ask_feedback_rating:
+  - text: Please rate our service from 1–5 ⭐⭐⭐⭐⭐
+  utter_ask_feedback_text:
+  - text: Share your feedback.
+  utter_thank_for_feedback:
+  - text: Thanks for your feedback! 🙏
+  utter_goodbye:
+  - text: Goodbye! Let me know if you need anything else.
+  utter_ask_order_id:
+  - text: Please provide your order ID.
+  utter_ask_dimensions:
+  - text: What are the dimensions of your space? (e.g., 200x100x80 cm)
+  utter_order_status:
+  - text: Your order {order_id} is currently being processed and will be delivered soon.
+  utter_order_canceled:
+  - text: Your order {order_id} has been canceled successfully.
+  utter_no_order_found:
+  - text: Sorry, I couldn't find an order with that ID.
+  utter_show_furniture:
+  - text: 'Here are some products that match your space: [product_list].'
+  utter_instruction_manual:
+  - text: 'Here is the instruction manual for {manual_furniture}: [link]'
+  utter_thanks_feedback:
+  - text: Thank you for your feedback!
+  utter_product_listing:
+  - text: 'Here are our latest furniture items: [listing_link]'
+  utter_ask_which_order_cancel:
+  - text: Which order would you like to cancel? (I’ve listed your orders above.) You can click a button or type the order ID.
+  utter_ask_which_order_status:
+  - text: Which order would you like to check? (I’ve listed your orders above.) You can click a button or type the order ID.
+  utter_confirm_cancel:
+  - text: 'Confirm cancel for order #{order_id}?'
+    buttons:
+    - title: Yes, cancel it
+      payload: /affirm
+    - title: No
+      payload: /deny
   utter_cancel_aborted:
-  - text: "Cancellation aborted."
+  - text: Cancellation aborted.
   utter_fallback:
-    - text: |
-        Sorry, I didn't understand that. Here's some common queries I can help you with:
+  - text: |
+      Sorry, I didn't understand that. Here's some common queries I can help you with:
 
-          1. Browse our furniture catalog 
-          2. Check your order status  
-          3. Leave feedback or a review  
-          4. Talk to a human agent  
+        1. Browse our furniture catalog 
+        2. Check your order status  
+        3. Leave feedback or a review  
+        4. Talk to a human agent  
 
-        Just type what you'd like to do!
-
+      Just type what you'd like to do!
   utter_ask_help:
-    - text: |
-        Here's some common queries I can help you with:
+  - text: |
+      Here's some common queries I can help you with:
 
-          1. Browse our furniture catalog 
-          2. Check your order status  
-          3. Leave feedback or a review  
-          4. Talk to a human agent  
+        1. Browse our furniture catalog 
+        2. Check your order status  
+        3. Leave feedback or a review  
+        4. Talk to a human agent  
 
-        Just type what you'd like to do!
-
+      Just type what you'd like to do!
   utter_example_rec:
-    - text: 'I would recommend the <a href="http://localhost/FYP-25-S2-34-Chatbot/Src/Boundary/Customer/viewFurnitureDetailsUI.php?id=3">Ergo Chair</a>'
-
+  - text: I would recommend the <a href="http://localhost/FYP-25-S2-34-Chatbot/Src/Boundary/Customer/viewFurnitureDetailsUI.php?id=3">Ergo Chair</a>
   utter_ask_manual_furniture:
-    - text: "Which furniture item do you need the instruction manual for?"
-
+  - text: Which furniture item do you need the instruction manual for?
   utter_ask_ticket_subject:
-    - text: "What's the subject of your support request? (e.g., 'Damaged item delivered')"
-
+  - text: What's the subject of your support request? (e.g., 'Damaged item delivered')
   utter_ask_ticket_message:
-    - text: "Please describe the issue in a sentence or two."
-
+  - text: Please describe the issue in a sentence or two.
   utter_ticket_created:
-    - text: "Ticket #{ticket_id} created. Our team will follow up shortly."
-
+  - text: 'Ticket #{ticket_id} created. Our team will follow up shortly.'
   utter_ticket_error:
-    - text: "Sorry—something went wrong creating your ticket."
-
+  - text: Sorry—something went wrong creating your ticket.
+  utter_furniture_recommendation:
+  - text: I can recommend some furniture if you type 'I'm looking for [Furniture Name]'
 actions:
-  - action_check_order
-  - action_cancel_order
-  - utter_greet
-  - action_store_feedback
-  - action_find_furniture
-  - action_get_manual
-  - action_reset_manual_slot
-  - action_pick_order_for_cancel
-  - action_pick_order_for_info
-  - action_order_details
-  - utter_ask_order_id
-  - action_create_support_ticket
-  - action_show_furniture_recommendations
-
+- utter_furniture_recommendation
+- action_check_order
+- action_cancel_order
+- utter_greet
+- action_store_feedback
+- action_find_furniture
+- action_get_manual
+- action_reset_manual_slot
+- action_pick_order_for_cancel
+- action_pick_order_for_info
+- action_order_details
+- utter_ask_order_id
+- action_create_support_ticket
+- action_show_furniture_recommendations
 session_config:
   session_expiration_time: 60
   carry_over_slots_to_new_session: false

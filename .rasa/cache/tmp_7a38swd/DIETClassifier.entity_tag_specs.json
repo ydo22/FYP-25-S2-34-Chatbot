@@ -1,0 +1,36 @@
+[
+  {
+    "tag_name": "entity",
+    "ids_to_tags": {
+      "1": "B-furniture_name",
+      "2": "I-furniture_name",
+      "3": "L-furniture_name",
+      "4": "U-furniture_name",
+      "5": "B-order_id",
+      "6": "I-order_id",
+      "7": "L-order_id",
+      "8": "U-order_id",
+      "9": "B-product_name",
+      "10": "I-product_name",
+      "11": "L-product_name",
+      "12": "U-product_name",
+      "0": "O"
+    },
+    "tags_to_ids": {
+      "B-furniture_name": 1,
+      "I-furniture_name": 2,
+      "L-furniture_name": 3,
+      "U-furniture_name": 4,
+      "B-order_id": 5,
+      "I-order_id": 6,
+      "L-order_id": 7,
+      "U-order_id": 8,
+      "B-product_name": 9,
+      "I-product_name": 10,
+      "L-product_name": 11,
+      "U-product_name": 12,
+      "O": 0
+    },
+    "num_tags": 13
+  }
+]

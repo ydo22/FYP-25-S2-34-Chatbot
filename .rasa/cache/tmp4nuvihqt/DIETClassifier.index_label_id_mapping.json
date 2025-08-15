@@ -1,0 +1,23 @@
+{
+  "0": "affirm",
+  "1": "ask_delivery",
+  "2": "ask_help",
+  "3": "cancel_order",
+  "4": "deny",
+  "5": "feedback_request",
+  "6": "furniture_recommendation",
+  "7": "give_feedback",
+  "8": "goodbye",
+  "9": "greet",
+  "10": "inform",
+  "11": "inform_feedback_text",
+  "12": "inform_rating",
+  "13": "instruction_manual",
+  "14": "open_support_ticket",
+  "15": "product_inquiry",
+  "16": "provide_dimensions",
+  "17": "provide_order_id",
+  "18": "search_furniture",
+  "19": "select_order",
+  "20": "show_menu"
+}

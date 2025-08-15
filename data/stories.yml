@@ -1,9 +1,5 @@
 version: "3.1"
 stories:
-- story: escalate_to_human
-  steps:
-  - intent: escalate
-  - action: utter_escalate
 
 - story: feedback_request
   steps:
@@ -75,3 +71,10 @@ stories:
     - slot_was_set:
         - order_id: "any_id"
     - action: action_order_details
+
+
+
+- story: interactive_story_1
+  steps:
+  - intent: product_inquiry
+  - action: utter_furniture_recommendation

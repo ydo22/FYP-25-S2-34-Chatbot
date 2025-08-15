@@ -16,11 +16,6 @@ rules:
   - intent: goodbye
   - action: utter_goodbye
 
-- rule: Escalate to human
-  steps:
-  - intent: escalate
-  - action: utter_escalate
-
 - rule: Handle fallback
   steps:
   - intent: nlu_fallback
@@ -121,3 +116,8 @@ rules:
   steps:
     - intent: search_furniture
     - action: action_show_furniture_recommendations
+
+- rule: Ask furniture recommend
+  steps:
+    - intent: product_inquiry
+    - action: utter_furniture_recommendation

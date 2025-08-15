@@ -1,0 +1,10 @@
+{
+  "rule_only_slots": [
+    "info_context",
+    "cancel_context"
+  ],
+  "rule_only_loops": [
+    "feedback_form",
+    "ticket_form"
+  ]
+}
