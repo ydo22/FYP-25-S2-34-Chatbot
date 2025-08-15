@@ -1,13 +1,15 @@
 from typing import Any, Text, Dict, List, Optional
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
-from rasa_sdk.events import SlotSet, EventType, FollowupAction 
+from rasa_sdk.events import SlotSet, EventType, FollowupAction, ActiveLoop
 import urllib.parse
 import re
 import string
 import mysql.connector
 from mysql.connector.connection import MySQLConnection
 from urllib.parse import quote_plus
+from html import escape
+
 # -------------------------------------------------------------------
 # Shared data / constants
 # -------------------------------------------------------------------
@@ -51,6 +53,18 @@ def _connect() -> MySQLConnection:
         password="",
         database="luxfurn",
     )
+
+# -------------------------------------------------------------------
+# Helpers
+# -------------------------------------------------------------------
+def _send_lines_as_html(dispatcher: CollectingDispatcher, lines: List[str]) -> None:
+    """
+    Send a single chat bubble with visible line breaks.
+    Escapes content to avoid HTML injection, then uses <br> to force newlines.
+    """
+    msg_html = "<br>".join(escape(line) for line in lines)
+    dispatcher.utter_message(text=msg_html)
+
 # -------------------------------------------------------------------
 # Existing actions (keep these as-is for your teammates)
 # -------------------------------------------------------------------
@@ -60,7 +74,6 @@ def _get_username(tracker: Tracker) -> Optional[str]:
     # Debug print to see raw value
     print(f"### DEBUG _get_username RAW sender_id='{sid}'")
 
-
     if sid and sid.lower() != "guest":
         normalized = sid.split("|")[-1].strip()
         print(f"### DEBUG _get_username USING normalized='{normalized}'")
@@ -68,7 +81,7 @@ def _get_username(tracker: Tracker) -> Optional[str]:
 
     # No sender_id or it's 'guest'
     return None
-    
+
 def _eta_days_from_status(status: str) -> Optional[int]:
     s = (status or "").lower()
     if s == "pending":
@@ -119,9 +132,9 @@ class ActionPickOrderForCancel(Action):
             if len(rows) == 1:
                 oid = str(rows[0]["order_id"])
                 status = rows[0]["order_status"]
-                dispatcher.utter_message(text=f"You have 1 order on file: Order #{oid} — {status}.")
+                _send_lines_as_html(dispatcher, [f"You have 1 order on file: Order #{oid} — {status}."])
                 if (status or "").lower() in ("cancelled", "canceled", "delivered"):
-                    dispatcher.utter_message(text=f"Order #{oid} cannot be cancelled (current status: {status}).")
+                    _send_lines_as_html(dispatcher, [f"Order #{oid} cannot be cancelled (current status: {status})."])
                     return [SlotSet("cancel_context", False), SlotSet("info_context", False)]
                 return [
                     SlotSet("order_id", oid),
@@ -131,10 +144,10 @@ class ActionPickOrderForCancel(Action):
                 ]
 
             # Otherwise, list orders and ask which to cancel
-            lines = ["**Your Orders:**"]
+            lines = ["Your Orders:"]
             for r in rows:
                 lines.append(f"- Order #{r['order_id']} — {r['order_status']}")
-            dispatcher.utter_message(text="\n".join(lines))
+            _send_lines_as_html(dispatcher, lines)
             dispatcher.utter_message(response="utter_ask_which_order_cancel")
             return [SlotSet("cancel_context", True), SlotSet("info_context", False)]
 
@@ -186,7 +199,7 @@ class ActionCancelOrder(Action):
 
             status = (row["order_status"] or "").lower()
             if status in ("delivered", "cancelled", "canceled"):
-                dispatcher.utter_message(text=f"Order #{order_id} cannot be cancelled (current status: {row['order_status']}).")
+                _send_lines_as_html(dispatcher, [f"Order #{order_id} cannot be cancelled (current status: {row['order_status']})."])
                 return [SlotSet("order_id", None), SlotSet("cancel_context", False)]
 
             # Perform cancel
@@ -200,12 +213,12 @@ class ActionCancelOrder(Action):
             )
             conn.commit()
 
-            dispatcher.utter_message(text=f"Order #{order_id} has been cancelled.")
+            _send_lines_as_html(dispatcher, [f"Order #{order_id} has been cancelled."])
             return [
-                    SlotSet("order_id", None),
-                    SlotSet("cancel_context", False),
-                    FollowupAction("action_listen"),
-                    ]
+                SlotSet("order_id", None),
+                SlotSet("cancel_context", False),
+                FollowupAction("action_listen"),
+            ]
         except Exception as e:
             print("DB error cancel:", e)
             dispatcher.utter_message("Sorry, I couldn’t cancel that order right now.")
@@ -249,24 +262,24 @@ class ActionPickOrderForInfo(Action):
 
             if len(rows) == 1:
                 oid = str(rows[0]["order_id"])
-                dispatcher.utter_message(text=f"You have 1 order on file: Order #{oid} — {rows[0]['order_status']}.")
+                _send_lines_as_html(dispatcher, [f"You have 1 order on file: Order #{oid} — {rows[0]['order_status']}."])
                 return [
-                        SlotSet("order_id", oid),
-                        SlotSet("info_context", True),
-                        SlotSet("cancel_context", False),
-                        FollowupAction("action_order_details"),
-                        ]
-
-            lines = ["**Your Orders:**"]
-            for r in rows:
-                lines.append(f"- Order #{r['order_id']} — {r['order_status']}")
-            dispatcher.utter_message(text="\n".join(lines))
-            dispatcher.utter_message(response="utter_ask_which_order_status")
-            return [
+                    SlotSet("order_id", oid),
                     SlotSet("info_context", True),
                     SlotSet("cancel_context", False),
-                    FollowupAction("action_listen"),    
-                    ]
+                    FollowupAction("action_order_details"),
+                ]
+
+            lines = ["Your Orders:"]
+            for r in rows:
+                lines.append(f"- Order #{r['order_id']} — {r['order_status']}")
+            _send_lines_as_html(dispatcher, lines)
+            dispatcher.utter_message(response="utter_ask_which_order_status")
+            return [
+                SlotSet("info_context", True),
+                SlotSet("cancel_context", False),
+                FollowupAction("action_listen"),
+            ]
 
         except Exception as e:
             print("DB error pick-for-info:", e)
@@ -330,39 +343,39 @@ class ActionOrderDetails(Action):
             status = head["order_status"]
             eta = _eta_days_from_status(status)
 
-            # Build message
+            # Build message (one field per line, no markdown **)
             lines = [
-                f"**Order #{order_id}**",
-                f"- Status: {status}",
-                f"- Placed: {head.get('created_at')}",
-                f"- Total: ${float(head.get('total_amount') or 0):.2f}",
-                f"- Ship to: {head.get('shipping_address')}, {head.get('shipping_city')}, {head.get('shipping_state')} {head.get('shipping_zip')}",
+                f"Order #{order_id} - Status: {status}",
+                f"Placed: {head.get('created_at')}",
+                f"Total: ${float(head.get('total_amount') or 0):.2f}",
+                f"Ship to: {head.get('shipping_address')}, {head.get('shipping_city')}, {head.get('shipping_state')} {head.get('shipping_zip')}",
             ]
+
             if items:
-                lines.append("- Items:")
+                lines.append("Items:")
                 for it in items:
-                    lines.append(f"  • {it['furniture_name']} × {it['quantity']} — ${float(it['total_price']):.2f}")
+                    lines.append(f"• {it['furniture_name']} × {it['quantity']} — ${float(it['total_price']):.2f}")
 
             if eta is None:
                 if str(status).lower() == "delivered":
-                    lines.append("**ETA:** Delivered.")
+                    lines.append("ETA: Delivered.")
                 elif str(status).lower() in ("cancelled", "canceled"):
-                    lines.append("**ETA:** Cancelled (will not be delivered).")
+                    lines.append("ETA: Cancelled (will not be delivered).")
                 else:
-                    lines.append("**ETA:** Not available.")
+                    lines.append("ETA: Not available.")
             elif eta == 0:
-                lines.append("**ETA:** Today.")
+                lines.append("ETA: Today.")
             elif eta == 1:
-                lines.append("**ETA:** 1 day.")
+                lines.append("ETA: 1 day.")
             else:
-                lines.append(f"**ETA:** {eta} days.")
+                lines.append(f"ETA: {eta} days.")
 
-            dispatcher.utter_message(text="\n".join(lines))
+            _send_lines_as_html(dispatcher, lines)
             return [
-                    SlotSet("info_context", False),
-                    SlotSet("order_id", None),         
-                    FollowupAction("action_listen"),    
-                    ]
+                SlotSet("info_context", False),
+                SlotSet("order_id", None),
+                FollowupAction("action_listen"),
+            ]
         except Exception as e:
             print("DB error details:", e)
             dispatcher.utter_message("Sorry, I couldn’t fetch that order right now.")
@@ -373,7 +386,7 @@ class ActionOrderDetails(Action):
                 if conn and conn.is_connected(): conn.close()
             except Exception:
                 pass
-                
+
 
 class SubmitFeedbackForm(Action):
     def name(self) -> str:
@@ -382,14 +395,14 @@ class SubmitFeedbackForm(Action):
     def run(self, dispatcher: CollectingDispatcher,
             tracker: Tracker,
             domain: Dict[str, Any]) -> List[Dict[str, Any]]:
-        
+
         feedback = tracker.get_slot("feedback_text")
         print("Collected feedback:", feedback)
         print("All slots:", tracker.slots)
 
         return [SlotSet("feedback_text", None),
-            SlotSet("requested_slot", None),
-            ActiveLoop(None)]
+                SlotSet("requested_slot", None),
+                ActiveLoop(None)]
 
 class ActionStoreFeedback(Action):
     def name(self) -> str:
@@ -399,10 +412,13 @@ class ActionStoreFeedback(Action):
         rating = tracker.get_slot("feedback_rating")
         text = tracker.get_slot("feedback_text")
 
-        sender_id = tracker.sender_id
-        user_id, username = sender_id.split("|", 1)  # split into ID and username
+        sender_id = tracker.sender_id or ""
+        # Guard against missing pipe to avoid ValueError
+        if "|" in sender_id:
+            user_id, username = sender_id.split("|", 1)
+        else:
+            user_id, username = sender_id, ""
 
-        import mysql.connector
         conn = mysql.connector.connect(
             host="localhost",
             user="root",
@@ -430,7 +446,6 @@ class ActionStoreFeedback(Action):
 # -------------------------------------------------------------------
 # NEW (grouped): Manual search helpers & actions
 # -------------------------------------------------------------------
-
 
 BASE_MANUAL_URL = (
     "http://localhost/FYP-25-S2-34-Chatbot/Src/Boundary/Customer/CustomerInstructionManualUI.php"
@@ -646,7 +661,7 @@ class ActionShowFurnitureRecommendations(Action):
                 text = text[len(p):].strip(" :,-")
                 break
         return text if text else None
-    
+
     def run(
         self,
         dispatcher: CollectingDispatcher,
