@@ -1,0 +1,10 @@
+[
+  {
+    "name": "order_id",
+    "pattern": "\\b\\d{4,12}\\b"
+  },
+  {
+    "name": "furniture_name",
+    "pattern": "(\\bErgo\\ Chair\\b|\\bRecliner\\ Seat\\b|\\bTV\\ Console\\b|\\bBookshelf\\ Classic\\b|\\bCoffee\\ Table\\b|\\bQueen\\ Bed\\ Frame\\b)"
+  }
+]

@@ -570,12 +570,31 @@ class ActionCreateSupportTicket(Action):
         try:
             conn = _connect()
             cur = conn.cursor()
+
+            cur.execute("""
+                SELECT u.id AS admin_id, COALESCE(COUNT(t.id), 0) AS load_count
+                FROM support_ticket_roles r
+                JOIN users u
+                  ON u.username = r.username
+                 AND u.role = 'admin'
+                 AND u.status = 1
+                LEFT JOIN support_tickets t
+                  ON t.assigned_admin_id = u.id
+                 AND t.status IN ('open','responded')
+                WHERE r.active = 1
+                GROUP BY u.id
+                ORDER BY load_count ASC, u.id ASC
+                LIMIT 1
+            """)
+            row = cur.fetchone()
+            assigned_admin_id = row[0] if row else None
+
             cur.execute(
                 """
-                INSERT INTO support_tickets (user_id, subject, message)
-                VALUES (%s, %s, %s)
+                INSERT INTO support_tickets (user_id, subject, message, assigned_admin_id)
+                VALUES (%s, %s, %s, %s)
                 """,
-                (user_id, subject, message),
+                (user_id, subject, message, assigned_admin_id),
             )
             conn.commit()
 

@@ -77,12 +77,28 @@ nlu:
 
 - intent: search_furniture
   examples: |
-    - I'm looking for a black chair
+    - I'm looking for a [black chair](product_name)
     - show me [black chair](product_name)
     - find [brown sofa](product_name)
     - I want a [wooden dining table](product_name)
     - [office desk](product_name)
     - search [blue armchair](product_name)
+    - recommend a [glass coffee table](product_name)
+    - do you have any [leather sofa](product_name)
+    - show me [white bookshelf](product_name)
+    - find [modern tv stand](product_name)
+    - I want to see [outdoor patio set](product_name)
+    - look for [king size bed](product_name)
+    - search [marble dining table](product_name)
+    - find me a [fabric recliner](product_name)
+    - do you have [small nightstand](product_name)
+    - I need a [storage cabinet](product_name)
+    - show [bamboo chair](product_name)
+    - I want to buy a [rocking chair](product_name)
+    - find [metal bunk bed](product_name)
+    - show me [velvet sofa set](product_name)
+    - do you have any recommendations for [office desk](product_name)
+    - show me [kitchen stool](product_name)
 
 - intent: open_support_ticket
   examples: |
