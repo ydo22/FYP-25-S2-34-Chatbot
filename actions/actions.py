@@ -439,7 +439,6 @@ class ActionStoreFeedback(Action):
         cursor.close()
         conn.close()
 
-        dispatcher.utter_message(text="Thanks for your feedback!")
         return []
 
 
